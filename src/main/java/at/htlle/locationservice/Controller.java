@@ -57,4 +57,9 @@ public class Controller {
     public Location location(@RequestParam(value = "lng", defaultValue = "0") String lng, @RequestParam(value = "lat", defaultValue = "0") String lat) {
         return new Location("Leoben", 47.383333, 15.1);
     }
+
+    @GetMapping("/knownLocations")
+    public List<Location> knownLocations() {
+        return knownLocations;
+    }
 }
