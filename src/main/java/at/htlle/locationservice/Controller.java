@@ -68,26 +68,18 @@ public class Controller {
 
     @GetMapping("/locationByCoords")
     public Location location(@RequestParam(value="lat", defaultValue = "0") double lat, @RequestParam(value = "lang", defaultValue = "0") double lang) {
-        Map<Location, Double> distanceTracker = new HashMap<>();
-        Location targetLocation = new Location("target", lat, lang);
-        for (Location location: knownLocations) {
-            distanceTracker.put(location, location.distanceTo(targetLocation));
-        }
-
-        Location closestLocation = null;
-        Double shortestDistance = null;
-        for (Location location: distanceTracker.keySet()) {
-            if (shortestDistance == null) {
-                closestLocation = location;
-                shortestDistance = distanceTracker.get(location);
-            }
-            if (shortestDistance > distanceTracker.get(location)) {
-                shortestDistance = distanceTracker.get(location);
-                closestLocation = location;
+        Location nearestLocation = null;
+        Location startLocation = new Location("start", lat, lang);
+        double minDistance = Double.POSITIVE_INFINITY;
+        for (Location location : knownLocations) {
+            double distance = location.distanceTo(startLocation);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestLocation = location;
             }
         }
 
-        return closestLocation;
+        return nearestLocation;
     }
 
     @GetMapping("/knownLocations")

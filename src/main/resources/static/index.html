@@ -63,7 +63,7 @@
 
             var latCoords  = document.getElementById('latInput').value;
             var longCoords = document.getElementById('longInput').value;
-            var url = '/locationByCoords?lat=' + encodeURIComponent(latCoords) + "&long=" + encodeURIComponent(longCoords);
+            var url = '/locationByCoords?lat=' + encodeURIComponent(latCoords) + "&lang=" + encodeURIComponent(longCoords);
 
             fetch(url)
                 .then(response => response.json())
@@ -79,6 +79,7 @@
 
                     mapLink.href = "https://www.google.at/maps/dir/" + latCoords + "," + longCoords + "/" + data.name;
                     mapLink.style.display = "inline";
+                    console.log(JSON.stringify(data));
                 })
         }
     </script>
