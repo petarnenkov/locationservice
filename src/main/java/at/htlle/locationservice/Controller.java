@@ -1,7 +1,9 @@
 package at.htlle.locationservice;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import at.htlle.locationservice.api.function.classes.Greeting;
@@ -53,7 +55,7 @@ public class Controller {
         return new Greeting(counter.incrementAndGet(), String.format(template, name));
     }
 
-    @GetMapping("/location")
+    @GetMapping("/locationByName")
     public Location location(@RequestParam(value = "name", defaultValue = "Leoben") String name) {
         for (Location location: knownLocations) {
             if (location.getName().equals(name)) {
@@ -62,6 +64,30 @@ public class Controller {
         }
 
         return new Location("Unknown Location", 0.0, 0.0);
+    }
+
+    @GetMapping("/locationByCoords")
+    public Location location(@RequestParam(value="lat", defaultValue = "0") double lat, @RequestParam(value = "lang", defaultValue = "0") double lang) {
+        Map<Location, Double> distanceTracker = new HashMap<>();
+        Location targetLocation = new Location("target", lat, lang);
+        for (Location location: knownLocations) {
+            distanceTracker.put(location, location.distanceTo(targetLocation));
+        }
+
+        Location closestLocation = null;
+        Double shortestDistance = null;
+        for (Location location: distanceTracker.keySet()) {
+            if (shortestDistance == null) {
+                closestLocation = location;
+                shortestDistance = distanceTracker.get(location);
+            }
+            if (shortestDistance > distanceTracker.get(location)) {
+                shortestDistance = distanceTracker.get(location);
+                closestLocation = location;
+            }
+        }
+
+        return closestLocation;
     }
 
     @GetMapping("/knownLocations")

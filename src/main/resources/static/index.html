@@ -3,9 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <title>Locationservice</title>
+    <style>
+        .mapLinkCSS {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Location Webserviceseite</h1>
-    <p>Fabi ist Gay!</p>
+    <h1>Ortsuche</h1>
+    <div id="OrtSucheInputContainer">
+        Suche nach ort:
+        <input type="text" id="locationInput" placeholder="Leoben">
+        <button onclick="getDataByLocationName()">Suchen</button>
+
+        <div id="resultContainerByName" style="margin-bottom: 10px; margin-top: 10px"></div>
+        <a id="mapLink" class="mapLinkCSS" target="_blank" href="">Open in Google Maps</a>
+    </div>
+
+    <h1>Ortsuche nach Koordinaten</h1>
+    <div id="KoordinatenSucheInputContainer">
+        Latitude:
+        <input type="number" id="latInput">
+        Longitude:
+        <input type="number" id="longInput">
+        <button onclick="getDataByCoords()">Suchen</button>
+        <div id="resultContainerByCoords" style="margin-bottom: 10px; margin-top: 10px"></div>
+        <a id="mapLinkByCoords" class="mapLinkCSS" target="_blank" href="">Open in Google Maps</a>
+    </div>
+
+
+
+    <script>
+        function getDataByLocationName() {
+            var value  = document.getElementById('locationInput').value;
+            var url = '/locationByName?name=' + encodeURIComponent(value);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    var latitude = data["latitude"];
+                    var longitude = data["longitude"]
+
+                    var locationData = "Koordinaten: " + latitude + "," + longitude;
+                    var resultContainer = document.getElementById("resultContainerByName");
+                    var mapLink = document.getElementById("mapLink");
+
+                    resultContainer.innerHTML = locationData;
+                    mapLink.href = "https://maps.google.com/?q=" + latitude + "," + longitude;
+                    mapLink.style.display = "inline";
+
+                    console.log(JSON.stringify(data));
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+        }
+
+        function getDataByCoords() {
+
+            var latCoords  = document.getElementById('latInput').value;
+            var longCoords = document.getElementById('longInput').value;
+            var url = '/locationByCoords?lat=' + encodeURIComponent(latCoords) + "&long=" + encodeURIComponent(longCoords);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    var resultContainer = document.getElementById("resultContainerByCoords");
+                    var mapLink = document.getElementById("mapLinkByCoords");
+                    var locationLink = document.createElement("location")
+                    locationLink.href = "https://maps.google.com/?q=" + data["latitude"] + "," + data["longitude"];
+                    locationLink.textContent = data["name"];
+
+                    resultContainer.innerHTML = "Nearest Location: "
+                    resultContainer.appendChild(locationLink);
+
+                    mapLink.href = "https://www.google.at/maps/dir/" + latCoords + "," + longCoords + "/" + data.name;
+                    mapLink.style.display = "inline";
+                })
+        }
+    </script>
 </body>
 </html>
