@@ -8,6 +8,7 @@
             display: none;
         }
     </style>
+    <script type="text/javascript" src="canvasjs-chart/canvasjs.min.js"></script>
 </head>
 <body>
     <h1>Ortsuche</h1>
@@ -23,12 +24,41 @@
     <h1>Ortsuche nach Koordinaten</h1>
     <div id="KoordinatenSucheInputContainer">
         Latitude:
-        <input type="number" id="latInput">
+        <input type="number" id="latInputCoordsSearch">
         Longitude:
-        <input type="number" id="longInput">
+        <input type="number" id="longInputCoordsSearch">
         <button onclick="getDataByCoords()">Suchen</button>
         <div id="resultContainerByCoords" style="margin-bottom: 10px; margin-top: 10px"></div>
         <a id="mapLinkByCoords" class="mapLinkCSS" target="_blank" href="">Open in Google Maps</a>
+    </div>
+
+    <h1>Ortsuche mit Höhe</h1>
+    <div id="HoeheSucheInputContainer">
+        Latitude:
+        <input type="number" id="latInputHeightSearch">
+        Longitude:
+        <input type="number" id="longInputHeightSearch">
+        <button onclick="getHeightByCoords()">Suchen</button>
+        <div id="resultContainerByHeight" style="margin-bottom: 10px; margin-top: 10px"></div>
+    </div>
+
+    <h1>Get ElevationProfile</h1>
+    <div id="ElevationProfile">
+        <h4> Position 1 </h4>
+        Latitude:
+        <input type="number" id="latInput1EProfile">
+        Longitude:
+        <input type="number" id="longInput1EProfile">
+            <br> <h4> Position 2 </h4>
+        Latitude:
+        <input type="number" id="latInput2EProfile">
+        Longitude:
+        <input type="number" id="longInput2EProfile">
+        <br>
+        Amount of intermediate Points:
+        <input type="number" id="pointsForEProfile">
+        <button onclick="getElevationProfile()">Suchen</button>
+        <div id="resultContainerEProfile" style="margin-bottom: 10px; margin-top: 10px"></div>
     </div>
 
 
@@ -61,8 +91,8 @@
 
         function getDataByCoords() {
 
-            var latCoords  = document.getElementById('latInput').value;
-            var longCoords = document.getElementById('longInput').value;
+            var latCoords  = document.getElementById('latInputCoordsSearch').value;
+            var longCoords = document.getElementById('longInputCoordsSearch').value;
             var url = '/locationByCoords?lat=' + encodeURIComponent(latCoords) + "&lang=" + encodeURIComponent(longCoords);
 
             fetch(url)
@@ -80,6 +110,60 @@
                     mapLink.href = "https://www.google.at/maps/dir/" + latCoords + "," + longCoords + "/" + data.name;
                     mapLink.style.display = "inline";
                     console.log(JSON.stringify(data));
+                })
+        }
+
+        function getHeightByCoords() {
+            var latCoords  = document.getElementById('latInputHeightSearch').value;
+            var longCoords = document.getElementById('longInputHeightSearch').value;
+            var url = '/heightByCoords?lat=' + encodeURIComponent(latCoords) + "&lang=" + encodeURIComponent(longCoords);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+
+                    var resultContainer = document.getElementById("resultContainerByHeight");
+                    resultContainer.innerText = "Altitude: " + data["location"]["name"];
+                    console.log(JSON.stringify(data));
+                })
+        }
+
+        function getElevationProfile() {
+
+            var latCoords1  = document.getElementById('latInput1EProfile').value;
+            var longCoords1 = document.getElementById('longInput1EProfile').value;
+
+            var latCoords2  = document.getElementById('latInput2EProfile').value;
+            var longCoords2 = document.getElementById('longInput2EProfile').value;
+
+            var points = document.getElementById("pointsForEProfile").value;
+            var url = '/getAltitudeProfile?' +
+                'lat1=' + encodeURIComponent(latCoords1) +
+                "&lang1=" + encodeURIComponent(longCoords1) +
+                "&lat2=" + encodeURIComponent(latCoords2) +
+                "&lang2=" + encodeURIComponent(longCoords2) +
+                "&points=" + encodeURIComponent(points);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(JSON.stringify(data));
+                    //var dps = [{x: 1, y: 10}, {x: 2, y: 10}, {x: 3, y: 10}, {x: 4, y: 10}, {x: 5, y: 10}];
+                    var points = [];
+                    for (var i = 0; i < data.length; i++) {
+                        points.push({x: i+1, y: data[i]})
+                    }
+
+                    var chart = new CanvasJS.Chart("resultContainerEProfile", {
+                        title: {
+                            text: "Elevation Profile"
+                        },
+                        data: [{
+                            type: "line",
+                            dataPoints: points
+                        }]
+                    })
+                    chart.render();
                 })
         }
     </script>

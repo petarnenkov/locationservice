@@ -1,17 +1,20 @@
 package at.htlle.locationservice;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import at.htlle.locationservice.api.function.classes.Greeting;
+import at.htlle.locationservice.api.function.classes.HeightSearchResult;
 import at.htlle.locationservice.api.function.classes.Location;
+import at.htlle.locationservice.api.function.classes.SrtmFile;
 import jakarta.annotation.PostConstruct;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 public class Controller {
@@ -80,6 +83,71 @@ public class Controller {
         }
 
         return nearestLocation;
+    }
+
+    @GetMapping("/heightByCoords")
+    public HeightSearchResult heightByCoords(@RequestParam(value="lat", defaultValue = "0") double lat, @RequestParam(value = "lang", defaultValue = "0") double lang) {
+
+        Location nearestLocation = location(lat, lang);
+        Location startLocation = new Location("start", lat, lang);
+
+        //find direction
+        if (nearestLocation == null) {
+            nearestLocation = new Location("the plateau of Leng", 0.00, 0.00);
+        }
+        Double azimuth = nearestLocation.directionTo(startLocation);
+        String direction = "";
+        if (azimuth >= 337.5 || azimuth < 22.5) {
+            direction = "Nördlich";
+        } else if (azimuth >= 22.5 && azimuth < 67.5) {
+            direction = "Nordöstlich";
+        } else if (azimuth >= 67.5 && azimuth < 112.5) {
+            direction = "Östlich";
+        } else if (azimuth >= 112.5 && azimuth < 157.5) {
+            direction = "Südöstlich";
+        } else if (azimuth >= 157.5 && azimuth < 202.5) {
+            direction = "Südlich";
+        } else if (azimuth >= 202.5 && azimuth < 247.5) {
+            direction = "Südwestlich";
+        } else if (azimuth >= 247.5 && azimuth < 292.5) {
+            direction = "Westlich";
+        } else if (azimuth >= 292.5 && azimuth < 337.5) {
+            direction = "Nordwestlich";
+        } else {
+            direction = "Unbekannte Richtung";
+        }
+
+        Double distance = startLocation.distanceTo(nearestLocation) * 100;
+
+        startLocation.setName(String.format("%.2f", distance) + "km " + direction + " von " + nearestLocation.getName());
+
+        SrtmFile file = new SrtmFile(new File("src/main/resources/srtm_40_03.asc"));
+        Optional<Double> altitude = file.getAltitudeForLocation(startLocation);
+
+
+        return new HeightSearchResult(startLocation, altitude, direction);
+    }
+
+    @GetMapping("/getAltitudeProfile")
+    public List<Double> getAltitudeProfile(
+            @RequestParam(value="lat1") double lat1,
+            @RequestParam(value="lang1") double lang1,
+            @RequestParam(value="lat2") double lat2,
+            @RequestParam(value="lang2") double lang2,
+            @RequestParam(value="points", defaultValue = "10") int inbetweenPoints) {
+        Location firstLocation = new Location("Start", lat1, lang2);
+        Location secondLocation = new Location("End", lat2, lang2);
+
+        List<Location> intermediateLocations = firstLocation.calculateIntermediateLocations(secondLocation, inbetweenPoints);
+        List<Double> elevations = new ArrayList<>();
+        for (Location location: intermediateLocations) {
+            File file = new File("src/main/resources/srtm_40_03.asc");
+            SrtmFile srtmFile = new SrtmFile(file);
+            Optional<Double> altitude = srtmFile.getAltitudeForLocation(location);
+            elevations.add(altitude.get());
+        }
+
+        return elevations;
     }
 
     @GetMapping("/knownLocations")

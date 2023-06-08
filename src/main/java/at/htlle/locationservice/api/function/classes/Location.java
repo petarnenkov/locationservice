@@ -1,6 +1,9 @@
 package at.htlle.locationservice.api.function.classes;
 
-public class Location 
+import java.util.ArrayList;
+import java.util.List;
+
+public class Location
 {
 	String name;
 	Double latitude;
@@ -26,7 +29,9 @@ public class Location
 		return name;
 	}
 
-
+	public void setName(String name) {
+		this.name = name;
+	}
 
 	public Double getLatitude() {
 		return latitude;
@@ -56,9 +61,24 @@ public class Location
 				(Math.cos(latitude1) * Math.cos(latitude2) * Math.cos(longitude2 - longitude1)));
 		
 	}
+
+	public List<Location> calculateIntermediateLocations(Location other, int numberOfPoints) {
+		List<Location> intermediateLocations = new ArrayList<Location>();
+
+		double dLat = (other.getLatitude() - this.getLatitude()) / (numberOfPoints + 1);
+		double dLon = (other.getLongitude() - this.getLongitude()) / (numberOfPoints + 1);
+
+		for (int i = 0; i <= numberOfPoints; i++) {
+			double lat = this.getLatitude() + i * dLat;
+			double lon = this.getLongitude() + i * dLon;
+			intermediateLocations.add(new Location("Point " + i + " of " + numberOfPoints, lat, lon));
+		}
+
+		return intermediateLocations;
+	}
 	
-	
-	 public Double directionTo(Location other) 
+
+	 public Double directionTo(Location other)
 	 {
 			double lat1 = this.getLatitude();
 			double lat2 = other.getLatitude();
